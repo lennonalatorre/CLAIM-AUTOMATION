@@ -1,0 +1,25 @@
+# ==========================
+# ClaimAutomationDragDrop – CPU-only requirements
+# Python 3.12 on Windows
+# ==========================
+# Install PyTorch/torchvision CPU wheels from the official CPU index
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Core ML / OCR (CPU)
+torch==2.9.0
+torchvision==0.24.0
+easyocr==1.7.2
+
+# Imaging / numeric
+opencv-python-headless==4.11.0.86
+numpy==1.26.4
+pillow==12.0.0
+
+# GUI + Office I/O
+PyQt6==6.7.1
+openpyxl==3.1.5
+python-docx==1.1.2
+
+# Optional: if any legacy code calls pytesseract, this provides the Python wrapper.
+# (You still need the Tesseract binary to use it; EasyOCR does not require it.)
+pytesseract==0.3.10

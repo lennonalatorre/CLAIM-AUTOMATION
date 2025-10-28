@@ -1,0 +1,6 @@
+pillow
+pytesseract
+opencv-python
+PyQt6
+python-docx
+openpyxl

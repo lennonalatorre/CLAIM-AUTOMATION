@@ -1,0 +1,80 @@
+ClaimAutomationDragDrop — Offline ERA → Excel/Word Assistant
+============================================================
+
+What this tool does
+-------------------
+• Drag & drop ERA screenshots (the blue/gray claim panels) into a clean PyQt6 GUI.
+• OCR with EasyOCR (Torch), then normalize fields your billing workflow needs:
+  Client, Insurance, Date of Service, Service Code, Copay, Deductible,
+  Insurance Payment, Contracted/Allowed Amount, Remarks (PR/CO codes).
+• Apply your billing math correctly:
+  - Allowed/Contracted = Copay + Deductible + Insurance Payment
+  - 65% Counselor rate = Allowed × 0.65
+  - 35% GWC per-claim = Allowed × 0.35
+  - Amount to Counselor = Insurance Payment − (Copay + Deductible)
+• Export to BOTH Excel (per-counselor sheet) and Word (running log).
+• Create clear warnings if something looks wrong (e.g., negative payout, missing PR code).
+
+Key modules (short tour)
+------------------------
+main.py                – app entry
+gui.py                 – PyQt6 interface (drag/drop, overrides, logs)
+ocr_module.py          – EasyOCR-based extraction + remark parsing
+claim_processor.py     – Orchestrates OCR → validate → calc → exports
+claim_validator.py     – Rule checks (e.g., PR vs CO, negative payout)
+calculations_module.py – Canonical formulas for your Excel layout
+excel_module.py        – Appends/creates counselor Excel workbooks
+word_module.py         – Appends a readable entry (and optional image)
+config.py              – Folders (WordFiles, ExcelFiles), JSON paths, etc.
+debugger.py            – Daily logfile to ./logs/
+
+Install (fresh venv recommended)
+--------------------------------
+1) Open PowerShell in the project folder.
+2) Create & activate a venv:
+   py -3.12 -m venv .venv
+   .\.venv\Scripts\activate
+3) Install deps (GPU build shown; use CPU index if no NVIDIA/CUDA 12.4):
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+4) Launch:
+   python main.py
+
+OCR behavior (how we map the screenshots)
+-----------------------------------------
+• We read the row with: Charged Rate | Patient Amount | Adjustments | Paid Amount.
+• Remarks panel drives patient responsibility:
+  - PR-3 → treat Patient Amount as **Copay**
+  - PR-1 → treat Patient Amount as **Deductible**
+  - CO-xx → contractual/provider write-off (NOT patient responsibility)
+• If remarks don’t specify PR-1/PR-3, both copay/deductible default to 0 and the
+  validator raises a warning so you can override in the GUI.
+
+Manual overrides (GUI)
+----------------------
+• Insurance dropdown + Manage.
+• Copay/Deductible fields (type values if OCR/remarks are ambiguous).
+• Counselor selector (filename routing for Excel/Word).
+• Status log with step-by-step actions and warnings.
+
+Privacy & offline operation
+---------------------------
+• Entire pipeline runs locally on your PC.
+• No data leaves the machine. Output goes to:
+  - ./ExcelFiles/<Counselor>.xlsx
+  - ./WordFiles/<Counselor>.docx
+• Logs are written to ./logs/error_log_YYYY-MM-DD.txt
+
+Troubleshooting
+---------------
+• “Torch CUDA False” → you’re on CPU; check NVIDIA driver (R550+), CUDA 12.4 wheels,
+  or switch to CPU index as noted in requirements.txt.
+• Missing DLLs / QT errors → ensure PyQt6 is installed in the SAME venv you run.
+• EasyOCR first run is slow (downloads model weights once).
+• If Excel/Word files are locked, close them before re-running.
+
+Optional tweak: enable GPU in OCR
+---------------------------------
+Open ocr_module.py and change the reader init to:
+  easyocr.Reader(['en'], gpu=True)
+(Leave it as False if you prefer predictably low VRAM usage.)
